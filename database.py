@@ -63,3 +63,13 @@ class SecureSnippetsDB:
             self._logger.log(f"Snippet '{name}' not found")
             return None
 
+    def delete_snippet(self, name):
+        with sqlite3.connect(self.db_path) as _connection:
+            _cursor = _connection.cursor()
+            _cursor.execute("""
+                DELETE FROM snippets WHERE name = ?
+            """, (name,))
+            if _cursor.rowcount > 0:
+                self._logger.log(f"Deleted Snippet '{name}'")
+            else:
+                self._logger.log(f"Snippet '{name}' not found")
