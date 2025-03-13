@@ -86,6 +86,14 @@ class SecureSnippetsDB:
             else:
                 self._logger.log(f"Snippet '{name}' not found")
 
+    def delete_all_snippets(self):
+        with sqlite3.connect(self.db_path) as _connection:
+            _cursor = _connection.cursor()
+            _cursor.execute("""
+                DELETE FROM snippets
+            """)
+            self._logger.log("Deleted all Snippets")
+
     def list_snippets(self):
         with sqlite3.connect(self.db_path) as _connection:
             _cursor = _connection.cursor()
