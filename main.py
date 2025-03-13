@@ -20,7 +20,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="SnipVault")
     parser.add_argument("action", choices=["save", "get", "update", "delete", "clear", "list"], help="Action to perform")
-    parser.add_argument("name", help="Snippet name")
+    parser.add_argument("name", nargs="?", default=None, help="Snippet name")
     parser.add_argument("value", nargs="?", default=None, help="Snippet value")
     
     args = parser.parse_args()
