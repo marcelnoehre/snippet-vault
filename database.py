@@ -33,3 +33,8 @@ class SecureSnippetsDB:
             with open(self._key_path, "rb") as _file:
                 _key = _file.read()
         return Fernet(_key)
+    
+    def add_snippet(self, name, data):
+        self._execute_query("""
+            INSERT OR REPLACE INTO snippets (name, data) VALUES (?, ?)
+        """, (name, self._key.encrypt(data.encode()).decode()))
