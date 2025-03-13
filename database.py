@@ -1,28 +1,27 @@
 import os
 import sqlite3
 from cryptography.fernet import Fernet
+from logger import Logger
 
 class SecureSnippetsDB:
     def __init__(self, db_path=None):
+        self._logger = Logger()
         self.db_path = db_path or os.path.expanduser("~/snip_vault.db")
         self._key_path = os.path.expanduser("~/.secure_snippet_key")
         self._key = self._load_key()
         self._init_db()
 
-    def _execute_query(self, query, params=None):
-        with sqlite3.connect(self.db_path) as _connection:
-            _connection.cursor().execute(query, params or ())
-            _connection.commit()
-            _connection.close()
-
     def _init_db(self):
-        self._execute_query("""
-            CREATE TABLE IF NOT EXISTS snippets (
-                id INTEGER PRIMARY KEY,
-                name TEXT UNIQUE,
-                data TEXT
-            )
-        """)
+        with sqlite3.connect(self.db_path) as _connection:
+            _connection.cursor().execute("""
+                CREATE TABLE IF NOT EXISTS snippets (
+                    id INTEGER PRIMARY KEY,
+                    name TEXT UNIQUE,
+                    data TEXT
+                )
+            """)
+            _connection.commit()
+            self._logger.log(f"Database Initialized at '{self.db_path}'")
     
     def _load_key(self):
         if not os.path.exists(self._key_path):
@@ -35,6 +34,8 @@ class SecureSnippetsDB:
         return Fernet(_key)
     
     def add_snippet(self, name, data):
-        self._execute_query("""
-            INSERT OR REPLACE INTO snippets (name, data) VALUES (?, ?)
-        """, (name, self._key.encrypt(data.encode()).decode()))
+        with sqlite3.connect(self.db_path) as _connection:
+            _connection.cursor().execute("""
+                INSERT OR REPLACE INTO snippets (name, data) VALUES (?, ?)
+            """, (name, self._key.encrypt(data.encode()).decode()))
+            self._logger.log(f"Stored Snippet '{name}'")
