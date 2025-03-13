@@ -22,7 +22,6 @@ class SecureSnippetsDB:
                 )
             """)
             _connection.commit()
-            self._logger.log(f"Database Initialized at '{self.db_path}'")
     
     def _load_key(self):
         if not os.path.exists(self._key_path):
@@ -34,14 +33,14 @@ class SecureSnippetsDB:
                 _key = _file.read()
         return Fernet(_key)
 
-    def add_snippet(self, name, data):
+    def save_snippet(self, name, data):
         with sqlite3.connect(self.db_path) as _connection:
             _cursor = _connection.cursor()
             _cursor.execute("""
                 SELECT 1 FROM snippets WHERE name = ?
             """, (name,))
             if _cursor.fetchone():
-                self._logger.log(f"Snippet '{name}' already exists")
+                self._logger.warn(f"Snippet '{name}' already exists")
             else:
                 _cursor.execute("""
                     INSERT OR REPLACE INTO snippets (name, data) VALUES (?, ?)
@@ -56,12 +55,11 @@ class SecureSnippetsDB:
                 SELECT data FROM snippets WHERE name = ?
             """, (name,))
             _data = _cursor.fetchone()
-
+            
         if _data:
-            return self._key.decrypt(_data[0].encode()).decode()
+            self._logger.log(self._key.decrypt(_data[0].encode()).decode())
         else:
-            self._logger.log(f"Snippet '{name}' not found")
-            return None
+            self._logger.warn(f"Snippet '{name}' not found")
         
     def update_snippet(self, name, data):
         with sqlite3.connect(self.db_path) as _connection:
@@ -73,7 +71,7 @@ class SecureSnippetsDB:
                 _connection.commit()
                 self._logger.log(f"Updated Snippet '{name}'")
             else:
-                self._logger.log(f"Snippet '{name}' not found")
+                self._logger.warn(f"Snippet '{name}' not found")
 
     def delete_snippet(self, name):
         with sqlite3.connect(self.db_path) as _connection:
@@ -84,7 +82,7 @@ class SecureSnippetsDB:
             if _cursor.rowcount > 0:
                 self._logger.log(f"Deleted Snippet '{name}'")
             else:
-                self._logger.log(f"Snippet '{name}' not found")
+                self._logger.warn(f"Snippet '{name}' not found")
 
     def delete_all_snippets(self):
         with sqlite3.connect(self.db_path) as _connection:
@@ -104,4 +102,4 @@ class SecureSnippetsDB:
             if _snippets:
                 self._logger.log("Snippets: " + ", ".join([_snippet[0] for _snippet in _snippets]))
             else:
-                self._logger.log("No Snippets found") 
+                self._logger.warn("No Snippets found") 
