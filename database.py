@@ -62,6 +62,18 @@ class SecureSnippetsDB:
         else:
             self._logger.log(f"Snippet '{name}' not found")
             return None
+        
+    def update_snippet(self, name, data):
+        with sqlite3.connect(self.db_path) as _connection:
+            _cursor = _connection.cursor()
+            _cursor.execute("""
+                UPDATE snippets SET data = ? WHERE name = ?
+            """, (self._key.encrypt(data.encode()).decode(), name))
+            if _cursor.rowcount > 0:
+                _connection.commit()
+                self._logger.log(f"Updated Snippet '{name}'")
+            else:
+                self._logger.log(f"Snippet '{name}' not found")
 
     def delete_snippet(self, name):
         with sqlite3.connect(self.db_path) as _connection:
