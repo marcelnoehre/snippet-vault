@@ -46,3 +46,15 @@ class SecureSnippetsDB:
                 INSERT OR REPLACE INTO snippets (name, data) VALUES (?, ?)
             """, (name, self._key.encrypt(data.encode()).decode()))
             self._logger.log(f"Stored Snippet '{name}'")
+
+    def get_snippet(self, name):
+        with sqlite3.connect(self.db_path) as _connection:
+            _cursor = _connection.cursor()
+            _cursor.execute("""
+                SELECT data FROM snippets WHERE name = ?
+            """, (name,))
+            _data = _cursor.fetchone()
+        if _data:
+            return self._key.decrypt(_data[0].encode()).decode()
+        else:
+            self._logger.log(f"Snippet '{name}' not found")
