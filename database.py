@@ -35,7 +35,14 @@ class SecureSnippetsDB:
     
     def add_snippet(self, name, data):
         with sqlite3.connect(self.db_path) as _connection:
-            _connection.cursor().execute("""
+            _cursor = _connection.cursor()
+            _cursor.execute("""
+                SELECT 1 FROM snippets WHERE name = ?
+            """, (name,))
+        if _cursor.fetchone():
+            self._logger.log(f"Snippet '{name}' already exists")
+        else:
+            _cursor.execute("""
                 INSERT OR REPLACE INTO snippets (name, data) VALUES (?, ?)
             """, (name, self._key.encrypt(data.encode()).decode()))
             self._logger.log(f"Stored Snippet '{name}'")
